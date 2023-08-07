@@ -10,6 +10,9 @@ internal class Program
         var path = @"https://www.farfetch.com/kz/sets/new-in-this-week-eu-women.aspx";
         client.BaseAddress = new Uri(path);
         client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+        client.DefaultRequestHeaders.Add("User-Agent", "AppleWebKit/537.36 (KHTML, like Gecko)");
+        client.DefaultRequestHeaders.Add("User-Agent", "Chrome/115.0.0.0");
+        client.DefaultRequestHeaders.Add("User-Agent", "Safari/537.36");
         var source = new MediaTypeWithQualityHeaderValue("application/json");
         //source.CharSet = "utf-8";
         //source.Quality = 0.9;
@@ -18,14 +21,15 @@ internal class Program
         var response = await client.GetAsync(path).ConfigureAwait(false);
         var textResponse = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         Console.WriteLine(textResponse);
-        var firstIndex = textResponse.IndexOf("<script type=\"application/ld+json\">", StringComparison.Ordinal);
+        var firstIndex = textResponse.IndexOf("\"slice-listing\":", StringComparison.Ordinal);
         textResponse = textResponse.Substring(firstIndex);
-        var lastIndex = textResponse.IndexOf("<style data-emotion=\"ltr 1j8wdcp\">", StringComparison.Ordinal);
+        var lastIndex = textResponse.IndexOf("</script></div>", StringComparison.Ordinal);
         textResponse = textResponse.Substring(0, lastIndex);
         firstIndex = textResponse.IndexOf("{", StringComparison.Ordinal);
         textResponse = textResponse.Substring(firstIndex);
-        lastIndex = textResponse.LastIndexOf("<", StringComparison.Ordinal);
+        lastIndex = textResponse.LastIndexOf("\";", StringComparison.Ordinal);
         textResponse = textResponse.Substring(0, lastIndex);
+        textResponse = textResponse.Replace("\\\"", "\"");
         await File.WriteAllTextAsync("farfetch_new.json", textResponse);
         Thread.Sleep(5000);
         
