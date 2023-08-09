@@ -14,6 +14,7 @@ internal class Program
         client.DefaultRequestHeaders.Add("User-Agent", "Chrome/115.0.0.0");
         client.DefaultRequestHeaders.Add("User-Agent", "Safari/537.36");
         var source = new MediaTypeWithQualityHeaderValue("application/json");
+
         //source.CharSet = "utf-8";
         //source.Quality = 0.9;
         client.DefaultRequestHeaders.Accept.Add(source);
@@ -23,7 +24,7 @@ internal class Program
         Console.WriteLine(textResponse);
         var firstIndex = textResponse.IndexOf("\"slice-listing\":", StringComparison.Ordinal);
         textResponse = textResponse.Substring(firstIndex);
-        var lastIndex = textResponse.IndexOf("</script></div>", StringComparison.Ordinal);
+        var lastIndex = textResponse.IndexOf("\"Feature:pdp_membership_awareness_logged_out_module\"", StringComparison.Ordinal);
         textResponse = textResponse.Substring(0, lastIndex);
         firstIndex = textResponse.IndexOf("{", StringComparison.Ordinal);
         textResponse = textResponse.Substring(firstIndex);
