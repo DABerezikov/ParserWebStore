@@ -11,12 +11,13 @@ namespace WebClientService
         #region Методы
         public void Run(ref CookieContainer cookies)
         {
+            
             _request = (HttpWebRequest)WebRequest.Create(Address);
             _request.Method = "GET";
             _request.Accept = Accept;
             _request.Host = Host;
             _request.Proxy = TurnOffProxy ? null : Proxy;
-
+            _request.ServerCertificateValidationCallback = (message, cert, chain, errors) => true;
             _request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
 
             if (!string.IsNullOrEmpty(ContentType)) _request.ContentType = ContentType;
