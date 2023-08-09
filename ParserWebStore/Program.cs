@@ -3,7 +3,7 @@ using System.Net.Http.Headers;
 using WebClientService;
 using static System.Net.WebRequestMethods;
 
-namespace ParserWebStore;
+namespace farfetch_com;
 
 internal class Program
 {
@@ -46,7 +46,7 @@ internal class Program
         await System.IO.File.WriteAllTextAsync("farfetch_new.json", textResponse);
 
 
-        var firstIndex = textResponse.IndexOf("\"slice-listing\":", StringComparison.Ordinal);
+        var firstIndex = textResponse.IndexOf("\"urlToken\":\"women\"", StringComparison.Ordinal);
         textResponse = textResponse.Substring(firstIndex);
         var lastIndex = textResponse.IndexOf("\"Feature:pdp_membership_awareness_logged_out_module\"", StringComparison.Ordinal);
         textResponse = textResponse.Substring(0, lastIndex);
