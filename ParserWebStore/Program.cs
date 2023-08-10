@@ -9,14 +9,14 @@ internal class Program
 {
     static async Task Main(string[] args)
     {
-        var proxy = new WebProxy("127.0.0.1:8888");
+        //var proxy = new WebProxy("127.0.0.1:8888");
         var cookieContainer = new CookieContainer();
         var rootPath = @"https://www.farfetch.com";
         var path = @"/kz/sets/new-in-this-week-eu-women.aspx";
         var client = new GetRequest()
         {
             Address = $"{rootPath}{path}",
-            Proxy = proxy,
+            //Proxy = proxy,
             Host = "www.farfetch.com",
             ContentType = "text/html; charset=utf-8",
             UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
@@ -51,8 +51,10 @@ internal class Program
         firstIndex = textResponse.IndexOf("(", StringComparison.Ordinal);
         lastIndex = textResponse.IndexOf(")\":", StringComparison.Ordinal);
         textResponse=textResponse.Remove(firstIndex, lastIndex-firstIndex);
+
         if (!Directory.Exists("Data")) Directory.CreateDirectory("Data");
         await System.IO.File.WriteAllTextAsync($"Data/{DateTime.Now.ToString("d")}_farfetch_new_full_page.json", textResponse);
+
         firstIndex = textResponse.IndexOf("\"category\":{", StringComparison.Ordinal);
         lastIndex = textResponse.IndexOf("\"designer\":{", StringComparison.Ordinal);
         textResponse = textResponse.Substring(firstIndex, lastIndex-firstIndex);
@@ -62,7 +64,7 @@ internal class Program
         textResponse += "}";
 
         await System.IO.File.WriteAllTextAsync($"Data/{DateTime.Now.ToString("d")}_farfetch_new_category.json", textResponse);
-          
+        await Console.Out.WriteLineAsync("Категории новинок успешно выделены");
         Console.ReadLine();
     }
 }
