@@ -43,8 +43,6 @@ internal class Program
 
         var textResponse = client.Response;
        
-
-
         var firstIndex = textResponse.IndexOf("__=\"", StringComparison.Ordinal)+4;
         textResponse = textResponse.Substring(firstIndex);
         var lastIndex = textResponse.IndexOf("\";", StringComparison.Ordinal);
@@ -53,7 +51,8 @@ internal class Program
         firstIndex = textResponse.IndexOf("(", StringComparison.Ordinal);
         lastIndex = textResponse.IndexOf(")\":", StringComparison.Ordinal);
         textResponse=textResponse.Remove(firstIndex, lastIndex-firstIndex);
-        await System.IO.File.WriteAllTextAsync("farfetch_new_full_page.json", textResponse);
+        if (!Directory.Exists("Data")) Directory.CreateDirectory("Data");
+        await System.IO.File.WriteAllTextAsync($"Data/{DateTime.Now.ToString("d")}_farfetch_new_full_page.json", textResponse);
         firstIndex = textResponse.IndexOf("\"category\":{", StringComparison.Ordinal);
         lastIndex = textResponse.IndexOf("\"designer\":{", StringComparison.Ordinal);
         textResponse = textResponse.Substring(firstIndex, lastIndex-firstIndex);
@@ -62,11 +61,8 @@ internal class Program
         textResponse = textResponse.Substring(0, firstIndex + 1);
         textResponse += "}";
 
-        await System.IO.File.WriteAllTextAsync($"{DateTime.Now.ToString("d")}_farfetch_new_category.json", textResponse);
-        
-        Thread.Sleep(5000);
-        
-       
+        await System.IO.File.WriteAllTextAsync($"Data/{DateTime.Now.ToString("d")}_farfetch_new_category.json", textResponse);
+          
         Console.ReadLine();
     }
 }
