@@ -43,18 +43,27 @@ internal class Program
 
         var textResponse = client.Response;
        
-        await System.IO.File.WriteAllTextAsync("farfetch_new.json", textResponse);
 
 
-        var firstIndex = textResponse.IndexOf("\"urlToken\":\"women\"", StringComparison.Ordinal);
+        var firstIndex = textResponse.IndexOf("__=\"", StringComparison.Ordinal)+4;
         textResponse = textResponse.Substring(firstIndex);
-        var lastIndex = textResponse.IndexOf("\"Feature:pdp_membership_awareness_logged_out_module\"", StringComparison.Ordinal);
-        textResponse = textResponse.Substring(0, lastIndex);
-        firstIndex = textResponse.IndexOf("{", StringComparison.Ordinal);
-        textResponse = textResponse.Substring(firstIndex);
-        lastIndex = textResponse.LastIndexOf("\";", StringComparison.Ordinal);
+        var lastIndex = textResponse.IndexOf("\";", StringComparison.Ordinal);
         textResponse = textResponse.Substring(0, lastIndex);
         textResponse = textResponse.Replace("\\\"", "\"");
+        firstIndex = textResponse.IndexOf("(", StringComparison.Ordinal);
+        lastIndex = textResponse.IndexOf(")\":", StringComparison.Ordinal);
+        textResponse=textResponse.Remove(firstIndex, lastIndex-firstIndex);
+        await System.IO.File.WriteAllTextAsync("farfetch_new_full_page.json", textResponse);
+        firstIndex = textResponse.IndexOf("\"category\":{", StringComparison.Ordinal);
+        lastIndex = textResponse.IndexOf("\"designer\":{", StringComparison.Ordinal);
+        textResponse = textResponse.Substring(firstIndex, lastIndex-firstIndex);
+        textResponse = textResponse.Replace("\"category\":", "{\"category\":");
+        firstIndex = textResponse.LastIndexOf("},", StringComparison.Ordinal);
+        textResponse = textResponse.Substring(0, firstIndex + 1);
+        textResponse += "}";
+
+        await System.IO.File.WriteAllTextAsync($"{DateTime.Now.ToString("d")}_farfetch_new_category.json", textResponse);
+        
         Thread.Sleep(5000);
         
        
