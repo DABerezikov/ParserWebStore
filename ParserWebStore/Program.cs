@@ -1,7 +1,5 @@
 ﻿using System.Net;
-using System.Net.Http.Headers;
 using WebClientService;
-using static System.Net.WebRequestMethods;
 
 namespace farfetch_com;
 
