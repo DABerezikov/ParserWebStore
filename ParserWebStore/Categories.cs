@@ -7,7 +7,9 @@ using System.Threading.Tasks;
 namespace www.farfetch.com
 {
 
-    public class Rootobject
+
+    public class Categories
+
     {
         public Category category { get; set; }
     }
