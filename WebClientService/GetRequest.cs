@@ -60,6 +60,7 @@ namespace WebClientService
                 _request.Referer = Referer;
 
             _request.CookieContainer = cookies;
+            _request.UseDefaultCredentials = true;
 
             try
             {

@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.VisualBasic;
+using Newtonsoft.Json;
 using OfficeOpenXml;
 using System;
 using System.Buffers.Text;
@@ -10,6 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using WebClientService;
 using www.farfetch.com;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace www.farfetch.com
 {
@@ -45,34 +47,49 @@ namespace www.farfetch.com
             if (_client==null) GetClientRequest(farfetchPagePath);
             if (_client.Address!=farfetchPagePath) _client.Address=farfetchPagePath;
             _client.ContentType = "image/webp";
-            _client.Run(ref _cookieContainer);
+            //_client.Accept = "image/avif, image/webp, image/apng";
+            _client.Host = "cdn-images.farfetch-contents.com";
+            var tempCookie = new CookieContainer();
+            _client.Run(ref tempCookie);
 
             var image = Base64StringToBitmap(_client.Response);
             _client.ContentType = "text/html; charset=utf-8";
+            //_client.Accept = "application/json";
+            _client.Host = "www.farfetch.com";
             return image;
         }
 
-        public  Bitmap Base64StringToBitmap( string base64String)
+        public Bitmap Base64StringToBitmap(string base64String)
         {
-            Bitmap bmpReturn = null;
+            try
+            {
+                Bitmap bmpReturn = null;
 
 
-            byte[] byteBuffer = Convert.FromBase64String(base64String);
-            MemoryStream memoryStream = new MemoryStream(byteBuffer);
+                byte[] byteBuffer = Convert.FromBase64String(base64String);
+                MemoryStream memoryStream = new MemoryStream(byteBuffer);
 
 
-            memoryStream.Position = 0;
+                memoryStream.Position = 0;
 
 
-            bmpReturn = (Bitmap)Bitmap.FromStream(memoryStream);
+                bmpReturn = (Bitmap)Bitmap.FromStream(memoryStream);
 
 
-            memoryStream.Close();
-            memoryStream = null;
-            byteBuffer = null;
+                memoryStream.Close();
+                memoryStream = null;
+                byteBuffer = null;
 
 
-            return bmpReturn;
+                return bmpReturn;
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+
         }
 
 
