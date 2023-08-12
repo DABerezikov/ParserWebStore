@@ -9,6 +9,7 @@ namespace WebClientService
         private HttpWebRequest _request;
 
         #region Методы
+        [Obsolete("Obsolete")]
         public void Run(ref CookieContainer cookies)
         {
             
@@ -64,7 +65,7 @@ namespace WebClientService
 
             try
             {
-                HttpWebResponse response = (HttpWebResponse)_request.GetResponse();
+                var response = (HttpWebResponse)_request.GetResponse();
 
                 if ((response.StatusCode == HttpStatusCode.OK ||
                      response.StatusCode == HttpStatusCode.Moved ||
@@ -72,20 +73,17 @@ namespace WebClientService
                      response.ContentType.StartsWith("image", StringComparison.OrdinalIgnoreCase))
                 {
                     // if the remote file was found, download oit
-                    using (Stream inputStream = response.GetResponseStream())
-                    {
-                        byte[] buffer = new byte[64000];
-                        int bytesRead;
+                    using Stream inputStream = response.GetResponseStream();
+                    var buffer = new byte[64000];
 
-                        bytesRead = inputStream.Read(buffer, 0, buffer.Length);
-                        Response = Convert.ToBase64String(buffer, 0, bytesRead);
-                    }
+                    var bytesRead = inputStream.Read(buffer, 0, buffer.Length);
+                    Response = Convert.ToBase64String(buffer, 0, bytesRead);
                 }
                 else
                 {
                     var stream = response.GetResponseStream();
 
-                    if (stream != null) Response = new StreamReader(stream).ReadToEnd();
+                    Response = new StreamReader(stream).ReadToEnd();
                     ResponseHeaders = response.Headers;
                     RequestHeaders = _request.Headers;
                 }
@@ -95,17 +93,14 @@ namespace WebClientService
             }
             catch (WebException ex)
             {
-                using (var stream = ex.Response.GetResponseStream())
-                using (var reader = new StreamReader(stream))
-                {
-                    Response = reader.ReadToEnd();
-                }
+                using var stream = ex.Response.GetResponseStream();
+                using var reader = new StreamReader(stream);
+                Response = reader.ReadToEnd();
             }
             catch (Exception ex)
             {
+                // ignored
             }
-
-
         }
 
 

@@ -4,13 +4,16 @@ using OfficeOpenXml;
 using System;
 using System.Buffers.Text;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Drawing;
 using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using OfficeOpenXml.Style;
 using WebClientService;
 using www.farfetch.com;
+using static System.Drawing.Image;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace www.farfetch.com
@@ -25,7 +28,7 @@ namespace www.farfetch.com
         public string RootPath { get; set; } = @"https://www.farfetch.com";
         public string Path { get; set; } = @"/kz/sets/new-in-this-week-eu-women.aspx";
         public string Filter { get; set; } = "Одежда";
-        private CookieContainer _cookieContainer = new CookieContainer();
+        private CookieContainer _cookieContainer = new();
 
         private GetRequest? _client;
 
@@ -41,7 +44,7 @@ namespace www.farfetch.com
             return textResponse;
         }
         
-        public Bitmap GetFarfetchImage(string farfetchPagePath)
+        public byte[] GetFarfetchImage(string farfetchPagePath)
         {
 
             if (_client==null) GetClientRequest(farfetchPagePath);
@@ -52,45 +55,14 @@ namespace www.farfetch.com
             var tempCookie = new CookieContainer();
             _client.Run(ref tempCookie);
 
-            var image = Base64StringToBitmap(_client.Response);
+            var byteImage = Convert.FromBase64String(_client.Response);
             _client.ContentType = "text/html; charset=utf-8";
             //_client.Accept = "application/json";
             _client.Host = "www.farfetch.com";
-            return image;
+            return byteImage;
         }
 
-        public Bitmap Base64StringToBitmap(string base64String)
-        {
-            try
-            {
-                Bitmap bmpReturn = null;
-
-
-                byte[] byteBuffer = Convert.FromBase64String(base64String);
-                MemoryStream memoryStream = new MemoryStream(byteBuffer);
-
-
-                memoryStream.Position = 0;
-
-
-                bmpReturn = (Bitmap)Bitmap.FromStream(memoryStream);
-
-
-                memoryStream.Close();
-                memoryStream = null;
-                byteBuffer = null;
-
-
-                return bmpReturn;
-
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
-            }
-
-        }
+        
 
 
         private void GetClientRequest(string farfetchPagePath)
@@ -187,11 +159,9 @@ namespace www.farfetch.com
 
         public void GenerateProductReport(ExcelPackage package)
         {
+            var arrayBite = package.GetAsByteArray() ?? throw new ArgumentNullException("package.GetAsByteArray()");
 
-            var sheet = package;
-            var arrayBite = package.GetAsByteArray();
-
-            File.WriteAllBytes($"{DateTime.Now.ToString("d")}NewIn.xlsx", arrayBite);
+            File.WriteAllBytes($"{DateTime.Now:d}NewIn.xlsx", arrayBite);
 
         }
 
@@ -219,6 +189,7 @@ namespace www.farfetch.com
                     sheet.Cells[1, 1].Value = "Image";
                     sheet.Cells[1, 2].Value = "Category";
                     sheet.Cells[1, 3].Value = "Link";
+                    
 
                     var positionRow = 2;
                     var positionCol = 1;
@@ -235,14 +206,34 @@ namespace www.farfetch.com
                             var productsInfo = GetProductInfo(response);
                             foreach (var productInfo in productsInfo.items)
                             {
-                                var image = GetFarfetchImage(productInfo.images.cutOut);
-                                sheet.Cells[positionRow, positionCol].Value = image;
-                                positionCol++;
-                                sheet.Cells[positionRow, positionCol].Value = productInfo.shortDescription;
-                                positionCol++;
-                                sheet.Cells[positionRow, positionCol].Value = $"{RootPath}{productInfo.url}";
-                                positionRow++;
-                                positionCol = 1;
+                                var bytes = GetFarfetchImage(productInfo.images.cutOut);
+                                if (bytes.Length != 0)
+                                {
+                                    sheet.Row(positionRow).Height = 100;
+                                    sheet.Column(positionCol).Width = 20;
+                                    using (Stream str = new MemoryStream(bytes))
+                                    {
+
+                                        var excelImage = sheet.Drawings.AddPicture(positionRow.ToString(), str);
+                                        excelImage.From.Row = positionRow-1;
+                                        excelImage.From.Column = positionCol-1;
+                                        excelImage.SetSize(100,100);
+
+                                    }
+
+                                    positionCol++;
+                                    sheet.Cells[positionRow, positionCol].Value = productInfo.shortDescription;
+                                    positionCol++;
+                                    sheet.Cells[positionRow, positionCol].Value = $"{RootPath}{productInfo.url}";
+                                    positionRow++;
+                                    positionCol = 1;
+                                }
+                                //sheet.Cells[1, 2, sheet.Rows.EndRow, sheet.Columns.EndColumn].AutoFitColumns();
+                                //sheet.Cells[1, 1, sheet.Rows.EndRow, sheet.Columns.EndColumn].Style.HorizontalAlignment =
+                                //    ExcelHorizontalAlignment.Center;
+                                //sheet.Cells[1, 1, sheet.Rows.EndRow, sheet.Columns.EndColumn].Style.VerticalAlignment =
+                                //    ExcelVerticalAlignment.Center;
+                                //GenerateProductReport(package);
                             }
 
                             
@@ -250,11 +241,16 @@ namespace www.farfetch.com
 
                         }
                     }
+                    sheet.Cells[1, 2, sheet.Rows.EndRow, sheet.Columns.EndColumn].AutoFitColumns();
+                    sheet.Cells[1, 1, sheet.Rows.EndRow, sheet.Columns.EndColumn].Style.HorizontalAlignment =
+                        ExcelHorizontalAlignment.Center;
+                    sheet.Cells[1, 1, sheet.Rows.EndRow, sheet.Columns.EndColumn].Style.VerticalAlignment =
+                        ExcelVerticalAlignment.Center;
                 }
 
 
             }
-
+            
             GenerateProductReport(package);
         }
 
