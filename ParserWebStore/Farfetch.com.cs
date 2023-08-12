@@ -228,12 +228,7 @@ namespace www.farfetch.com
                                     positionRow++;
                                     positionCol = 1;
                                 }
-                                //sheet.Cells[1, 2, sheet.Rows.EndRow, sheet.Columns.EndColumn].AutoFitColumns();
-                                //sheet.Cells[1, 1, sheet.Rows.EndRow, sheet.Columns.EndColumn].Style.HorizontalAlignment =
-                                //    ExcelHorizontalAlignment.Center;
-                                //sheet.Cells[1, 1, sheet.Rows.EndRow, sheet.Columns.EndColumn].Style.VerticalAlignment =
-                                //    ExcelVerticalAlignment.Center;
-                                //GenerateProductReport(package);
+                                
                             }
 
                             
