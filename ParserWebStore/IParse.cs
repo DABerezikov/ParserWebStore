@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace www.farfetch.com
+﻿namespace www_farfetch_com
 {
     public interface IParse
     {

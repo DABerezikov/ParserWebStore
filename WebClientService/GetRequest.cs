@@ -1,5 +1,4 @@
-﻿using System.Configuration;
-using System.Net;
+﻿using System.Net;
 using System.Net.Cache;
 
 namespace WebClientService
@@ -8,7 +7,7 @@ namespace WebClientService
     {
         private HttpWebRequest _request;
 
-        #region Методы
+        #region Methods
         [Obsolete("Obsolete")]
         public void Run(ref CookieContainer cookies)
         {
@@ -110,7 +109,7 @@ namespace WebClientService
         } 
         #endregion
 
-        #region Свойства
+        #region Properties
         Dictionary<string, string> Headers = new Dictionary<string, string>();
         public bool NoCachePolicy { get; set; }
         public bool AcceptGZipEncoding { get; set; }

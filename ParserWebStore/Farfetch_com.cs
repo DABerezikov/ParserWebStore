@@ -11,11 +11,11 @@ namespace www_farfetch_com
     {
 
         public string NewInPageJsonPathWomen { get; set; } =
-            $"Data/{DateTime.Now.ToString("d")}_farfetch_new_full_page_women.json";
+            $"Data/{DateTime.Now:d}_farfetch_new_full_page_women.json";
         public string NewInPageJsonPathMen { get; set; } =
-            $"Data/{DateTime.Now.ToString("d")}_farfetch_new_full_page_men.json";
+            $"Data/{DateTime.Now:d}_farfetch_new_full_page_men.json";
 
-        public string CategoryPath { get; set; } = $"Data/{DateTime.Now.ToString("d")}_farfetch_new_category.json";
+        public string CategoryPath { get; set; } = $"Data/{DateTime.Now:d}_farfetch_new_category.json";
         public string RootPath { get; set; } = @"https://www.farfetch.com";
         public string PathWomen { get; set; } = @"/kz/sets/new-in-this-week-eu-women.aspx";
         public string PathMen { get; set; } = @"/kz/sets/new-in-this-week-eu-men.aspx";
@@ -24,11 +24,15 @@ namespace www_farfetch_com
 
         private GetRequest? _client;
 
+        [Obsolete("Obsolete")]
         public string GetFarfetchResponse(string farfetchPagePath)
         {
 
-            if (_client==null) GetClientRequest(farfetchPagePath);
-            if (_client.Address!=farfetchPagePath) _client.Address=farfetchPagePath;
+            if (_client==null)
+                GetClientRequest(farfetchPagePath);
+
+            if (_client?.Address!=farfetchPagePath)
+                _client.Address=farfetchPagePath;
 
             _client.Run(ref _cookieContainer);
 
@@ -39,8 +43,12 @@ namespace www_farfetch_com
         public byte[] GetFarfetchImage(string farfetchPagePath)
         {
 
-            if (_client==null) GetClientRequest(farfetchPagePath);
-            if (_client.Address!=farfetchPagePath) _client.Address=farfetchPagePath;
+            if (_client==null)
+                GetClientRequest(farfetchPagePath);
+
+            if (_client?.Address!=farfetchPagePath)
+                _client.Address=farfetchPagePath;
+
             _client.ContentType = "image/webp";
             //_client.Accept = "image/avif, image/webp, image/apng";
             _client.Host = "cdn-images.farfetch-contents.com";
@@ -57,7 +65,7 @@ namespace www_farfetch_com
         
 
 
-        private void GetClientRequest(string farfetchPagePath)
+        private void GetClientRequest(string farfetchPagePath) //TODO Men
         {
             //var proxy = new WebProxy("127.0.0.1:8888");
             
@@ -71,7 +79,7 @@ namespace www_farfetch_com
                     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
                 Accept = "application/json",
                 AcceptGZipEncoding = true,
-                Referer = @"https://www.farfetch.com/kz/shopping/women/items.aspx"
+                Referer = @$"{RootPath}{PathWomen}" //TODO Men
             };
 
 
@@ -93,17 +101,7 @@ namespace www_farfetch_com
 
         public static string GetDataPage(string response)
         {
-            //var textResponse = response;
-            //var firstIndex = textResponse.IndexOf("__=\"", StringComparison.Ordinal) + 4;
-            //textResponse = textResponse.Substring(firstIndex);
-            //var lastIndex = textResponse.IndexOf("\";", StringComparison.Ordinal);
-            //textResponse = textResponse.Substring(0, lastIndex);
-            //textResponse = textResponse.Replace("\\\"", "\"");
-
-            //firstIndex = textResponse.IndexOf("(", StringComparison.Ordinal);
-            //lastIndex = textResponse.IndexOf(")\":", StringComparison.Ordinal);
-            //textResponse = textResponse.Remove(firstIndex, lastIndex - firstIndex);
-
+            
             var textResponse = response.Substring(response.IndexOf("__=\"", StringComparison.Ordinal) + 4);
 
             textResponse = textResponse.Substring(0, textResponse.IndexOf("\";", StringComparison.Ordinal))
@@ -147,7 +145,7 @@ namespace www_farfetch_com
 
         }
 
-        public static ProductInfo GetProductInfo(string response)
+        public static ProductInfo? GetProductInfo(string response)
         {
             var textResponse = response;
 
@@ -155,21 +153,22 @@ namespace www_farfetch_com
             var lastIndex = textResponse.IndexOf("\"listingPagination\":", StringComparison.Ordinal) - 1;
             textResponse = textResponse.Substring(firstIndex, lastIndex - firstIndex);
 
-            ProductInfo data = JsonConvert.DeserializeObject<ProductInfo>(textResponse);
+            var data = JsonConvert.DeserializeObject<ProductInfo>(textResponse);
 
             return data;
 
         }
 
-        public void GenerateProductReport(ExcelPackage package)
+        public void GenerateProductReport(ExcelPackage package) //TODO Men
         {
             var arrayBite = package.GetAsByteArray() ?? throw new ArgumentNullException("package.GetAsByteArray()");
 
-            File.WriteAllBytes($"{DateTime.Now:d}NewIn.xlsx", arrayBite);
+            File.WriteAllBytes($"{DateTime.Now:d}NewIn_Women.xlsx", arrayBite);
 
         }
 
-        public void StartParse()
+        [Obsolete("Obsolete")]
+        public void StartParse() //TODO Men
         {
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
@@ -183,16 +182,13 @@ namespace www_farfetch_com
             if (categories == null) return;
 
             var package = new ExcelPackage();
-
-               
-                
-
-            var productsCategories = categories.categoryList.categoryNameLists
-                .Where(c => c.description == $"{Filter}")
+            
+            var productsCategories = categories.CategoryList.categoryNameLists
+                .Where(c => c.Description == $"{Filter}")
                 .SelectMany(c=>c.productsCategories, (_, category) => new 
                 {
-                    CategoryName = category.description,
-                    Product = category.products
+                    CategoryName = category.Description,
+                    Product = category.Products
                 });
 
             foreach (var productsCategory in productsCategories)
@@ -205,7 +201,7 @@ namespace www_farfetch_com
                 for (int i = 0, row = 2; i < productsCategory.Product.Length; i++, row++)
                 {
                     var response = GetFarfetchResponse(
-                        $"{RootPath}{PathWomen}?page=1&view=96&sort=3&category={productsCategory.Product[i].value}");
+                        $"{RootPath}{PathWomen}?page=1&view=96&sort=3&category={productsCategory.Product[i].Value}");
                     response = GetDataPage(response);
                     var productsInfo = GetProductInfo(response).items[0];
                     var bytes = GetFarfetchImage(productsInfo.images.cutOut);
@@ -230,86 +226,7 @@ namespace www_farfetch_com
                     ExcelVerticalAlignment.Center;
             }
             GenerateProductReport(package);
-
-
-
-
-
-
-
-
-
-
-            //foreach (var category in categories.categoryList.categoryNameLists)
-            //{
-            //    if (category.description != $"{Filter}") continue;
-
-            //    foreach (var child in category.productsCategories)
-            //    {
-            //        var namePage = child.description;
-            //       var sheet = package.Workbook.Worksheets.Add($"{Filter} {namePage}");
-            //        sheet.Cells[1, 1].Value = "Image";
-            //        sheet.Cells[1, 2].Value = "Category";
-            //        sheet.Cells[1, 3].Value = "Link";
-
-
-            //        var positionRow = 2;
-            //        var positionCol = 1;
-
-            //        foreach (var productCategory in child.products)
-            //        {
-            //            sheet.Cells[positionRow, positionCol].Value = productCategory.description;
-            //            positionRow++;
-            //            foreach (var product in productCategory.children)
-            //            {
-            //                var response = GetFarfetchResponse(
-            //                    $"{RootPath}{PathWomen}?page=1&view=96&sort=3&category={product.value}");
-            //                response = GetDataPage(response);
-            //                var productsInfo = GetProductInfo(response);
-            //                foreach (var productInfo in productsInfo.items)
-            //                {
-            //                    var bytes = GetFarfetchImage(productInfo.images.cutOut);
-            //                    if (bytes.Length != 0)
-            //                    {
-            //                        sheet.Row(positionRow).Height = 100;
-            //                        sheet.Column(positionCol).Width = 20;
-            //                        using (Stream str = new MemoryStream(bytes))
-            //                        {
-
-            //                            var excelImage = sheet.Drawings.AddPicture(positionRow.ToString(), str);
-            //                            excelImage.From.Row = positionRow - 1;
-            //                            excelImage.From.Column = positionCol - 1;
-            //                            excelImage.SetSize(100, 100);
-
-            //                        }
-
-            //                        positionCol++;
-            //                        sheet.Cells[positionRow, positionCol].Value = productInfo.shortDescription;
-            //                        positionCol++;
-            //                        sheet.Cells[positionRow, positionCol].Value = $"{RootPath}{productInfo.url}";
-            //                        positionRow++;
-            //                        positionCol = 1;
-            //                    }
-
-            //                }
-
-
-
-
-            //            }
-            //        }
-
-            //        sheet.Cells[1, 2, sheet.Rows.EndRow, sheet.Columns.EndColumn].AutoFitColumns();
-            //        sheet.Cells[1, 1, sheet.Rows.EndRow, sheet.Columns.EndColumn].Style.HorizontalAlignment =
-            //            ExcelHorizontalAlignment.Center;
-            //        sheet.Cells[1, 1, sheet.Rows.EndRow, sheet.Columns.EndColumn].Style.VerticalAlignment =
-            //            ExcelVerticalAlignment.Center;
-            //    }
-
-
-            //}
-
-            //GenerateProductReport(package);
+            
         }
 
 

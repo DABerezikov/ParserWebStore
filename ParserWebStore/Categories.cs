@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
-namespace www.farfetch.com
+namespace www_farfetch_com
 {
 
 
@@ -13,7 +8,7 @@ namespace www.farfetch.com
 
     {
         [JsonProperty("category")] 
-        public CategoryList categoryList { get; set; }
+        public CategoryList CategoryList { get; set; }
     }
 
     public class CategoryList
@@ -22,55 +17,55 @@ namespace www.farfetch.com
         public object[] CategoryListInfo { get; set; }
         [JsonProperty("values")]
         public CategoryNameList[] categoryNameLists { get; set; }
-        public string description { get; set; }
-        public string filter { get; set; }
-        public bool isServerSideRendering { get; set; }
+        public string Description { get; set; }
+        public string Filter { get; set; }
+        public bool IsServerSideRendering { get; set; }
     }
 
     public class CategoryNameList
     {
         [JsonProperty("children")]
         public ProductsCategory[] productsCategories { get; set; }
-        public string urlToken { get; set; }
-        public string url { get; set; }
-        public string value { get; set; }
-        public string description { get; set; }
-        public int count { get; set; }
-        public int deep { get; set; }
+        public string UrlToken { get; set; }
+        public string Url { get; set; }
+        public string Value { get; set; }
+        public string Description { get; set; }
+        public int Count { get; set; }
+        public int Deep { get; set; }
     }
 
     public class ProductsCategory
     {
         [JsonProperty("children")]
-        public Product[] products { get; set; }
-        public string urlToken { get; set; }
-        public string url { get; set; }
-        public string value { get; set; }
-        public string description { get; set; }
-        public int count { get; set; }
-        public int deep { get; set; }
+        public Product[] Products { get; set; }
+        public string UrlToken { get; set; }
+        public string Url { get; set; }
+        public string Value { get; set; }
+        public string Description { get; set; }
+        public int Count { get; set; }
+        public int Deep { get; set; }
     }
 
     public class Product
     {
-        public Child2[] children { get; set; }
-        public string urlToken { get; set; }
-        public string url { get; set; }
-        public string value { get; set; }
-        public string description { get; set; }
-        public int count { get; set; }
-        public int deep { get; set; }
+        public Child2[] Children { get; set; }
+        public string UrlToken { get; set; }
+        public string Url { get; set; }
+        public string Value { get; set; }
+        public string Description { get; set; }
+        public int Count { get; set; }
+        public int Deep { get; set; }
     }
 
     public class Child2
     {
-        public object[] children { get; set; }
-        public string urlToken { get; set; }
-        public string url { get; set; }
-        public string value { get; set; }
-        public string description { get; set; }
-        public int count { get; set; }
-        public int deep { get; set; }
+        public object[] Children { get; set; }
+        public string UrlToken { get; set; }
+        public string Url { get; set; }
+        public string Value { get; set; }
+        public string Description { get; set; }
+        public int Count { get; set; }
+        public int Deep { get; set; }
     }
 
 }
