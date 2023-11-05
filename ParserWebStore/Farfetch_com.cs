@@ -1,22 +1,11 @@
-﻿using Microsoft.VisualBasic;
+﻿using System.Net;
 using Newtonsoft.Json;
 using OfficeOpenXml;
-using System;
-using System.Buffers.Text;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.Drawing;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 using OfficeOpenXml.Style;
 using WebClientService;
 using www.farfetch.com;
-using static System.Drawing.Image;
-using static System.Net.Mime.MediaTypeNames;
 
-namespace www.farfetch.com
+namespace www_farfetch_com
 {
     public class Farfetch : IParse
     {
@@ -101,16 +90,24 @@ namespace www.farfetch.com
 
         public static string GetDataPage(string response)
         {
-            var textResponse = response;
-            var firstIndex = textResponse.IndexOf("__=\"", StringComparison.Ordinal) + 4;
-            textResponse = textResponse.Substring(firstIndex);
-            var lastIndex = textResponse.IndexOf("\";", StringComparison.Ordinal);
-            textResponse = textResponse.Substring(0, lastIndex);
-            textResponse = textResponse.Replace("\\\"", "\"");
+            //var textResponse = response;
+            //var firstIndex = textResponse.IndexOf("__=\"", StringComparison.Ordinal) + 4;
+            //textResponse = textResponse.Substring(firstIndex);
+            //var lastIndex = textResponse.IndexOf("\";", StringComparison.Ordinal);
+            //textResponse = textResponse.Substring(0, lastIndex);
+            //textResponse = textResponse.Replace("\\\"", "\"");
 
-            firstIndex = textResponse.IndexOf("(", StringComparison.Ordinal);
-            lastIndex = textResponse.IndexOf(")\":", StringComparison.Ordinal);
-            textResponse = textResponse.Remove(firstIndex, lastIndex - firstIndex);
+            //firstIndex = textResponse.IndexOf("(", StringComparison.Ordinal);
+            //lastIndex = textResponse.IndexOf(")\":", StringComparison.Ordinal);
+            //textResponse = textResponse.Remove(firstIndex, lastIndex - firstIndex);
+
+            var textResponse = response.Substring(response.IndexOf("__=\"", StringComparison.Ordinal) + 4);
+
+            textResponse = textResponse.Substring(0, textResponse.IndexOf("\";", StringComparison.Ordinal))
+                .Replace("\\\"", "\"");
+
+
+            textResponse = textResponse.Remove(textResponse.IndexOf("(", StringComparison.Ordinal), textResponse.IndexOf(")\":", StringComparison.Ordinal));
             return textResponse;
         }
 
@@ -123,7 +120,7 @@ namespace www.farfetch.com
 
         }
 
-        public static Categories GetCategories(string filePathIn, string filePathOut)
+        public static Categories? GetCategories(string filePathIn, string filePathOut)
         {
             string textResponse;
             using (StreamReader reader = new StreamReader(filePathIn))
@@ -133,14 +130,15 @@ namespace www.farfetch.com
 
             var firstIndex = textResponse.IndexOf("\"category\":{", StringComparison.Ordinal);
             var lastIndex = textResponse.IndexOf("\"designer\":{", StringComparison.Ordinal);
-            textResponse = textResponse.Substring(firstIndex, lastIndex - firstIndex);
-            textResponse = textResponse.Replace("\"category\":", "{\"category\":");
-            firstIndex = textResponse.LastIndexOf("},", StringComparison.Ordinal);
-            textResponse = textResponse.Substring(0, firstIndex + 1);
-            textResponse += "}";
+            textResponse = textResponse
+                .Substring(firstIndex, lastIndex - firstIndex)
+                .Replace("\"category\":", "{\"category\":");
+            
+            textResponse = textResponse.Substring(0, textResponse.LastIndexOf("},", StringComparison.Ordinal) + 1) + "}";
+           
             File.WriteAllText(filePathOut, textResponse);
             Console.WriteLine("Категории новинок успешно выделены");
-            Categories data = JsonConvert.DeserializeObject<Categories>(textResponse);
+            var data = JsonConvert.DeserializeObject<Categories>(textResponse);
             return data;
 
         }
@@ -180,11 +178,11 @@ namespace www.farfetch.com
 
             foreach (var category in categories.category.values)
             {
-                var namePage = category.description;
+                if (category.description != $"{Filter}") continue;
 
                 foreach (var child in category.children)
                 {
-                    if (child.description != $"{Filter}") continue;
+                    var namePage = child.description;
                     var sheet = package.Workbook.Worksheets.Add($"{Filter} {namePage}");
                     sheet.Cells[1, 1].Value = "Image";
                     sheet.Cells[1, 2].Value = "Category";
