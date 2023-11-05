@@ -138,6 +138,7 @@ namespace www_farfetch_com
            
             File.WriteAllText(filePathOut, textResponse);
             Console.WriteLine("Категории новинок успешно выделены");
+
             var data = JsonConvert.DeserializeObject<Categories>(textResponse);
             return data;
 
@@ -145,12 +146,14 @@ namespace www_farfetch_com
 
         public static ProductInfo GetProductInfo(string response)
         {
-            string textResponse = response;
+            var textResponse = response;
 
             var firstIndex = textResponse.IndexOf("\"listingItems\":", StringComparison.Ordinal) + 15;
             var lastIndex = textResponse.IndexOf("\"listingPagination\":", StringComparison.Ordinal) - 1;
             textResponse = textResponse.Substring(firstIndex, lastIndex - firstIndex);
+
             ProductInfo data = JsonConvert.DeserializeObject<ProductInfo>(textResponse);
+
             return data;
 
         }
