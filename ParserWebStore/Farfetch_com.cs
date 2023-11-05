@@ -10,12 +10,15 @@ namespace www_farfetch_com
     public class Farfetch : IParse
     {
 
-        public string NewInPageJsonPath { get; set; } =
-            $"Data/{DateTime.Now.ToString("d")}_farfetch_new_full_page.json";
+        public string NewInPageJsonPathWomen { get; set; } =
+            $"Data/{DateTime.Now.ToString("d")}_farfetch_new_full_page_women.json";
+        public string NewInPageJsonPathMen { get; set; } =
+            $"Data/{DateTime.Now.ToString("d")}_farfetch_new_full_page_men.json";
 
         public string CategoryPath { get; set; } = $"Data/{DateTime.Now.ToString("d")}_farfetch_new_category.json";
         public string RootPath { get; set; } = @"https://www.farfetch.com";
-        public string Path { get; set; } = @"/kz/sets/new-in-this-week-eu-women.aspx";
+        public string PathWomen { get; set; } = @"/kz/sets/new-in-this-week-eu-women.aspx";
+        public string PathMen { get; set; } = @"/kz/sets/new-in-this-week-eu-men.aspx";
         public string Filter { get; set; } = "Одежда";
         private CookieContainer _cookieContainer = new();
 
@@ -170,84 +173,143 @@ namespace www_farfetch_com
         {
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
-            var textResponse = GetFarfetchResponse($"{RootPath}{Path}");
+            var textResponseWomen = GetFarfetchResponse($"{RootPath}{PathWomen}");
 
-            var dataResponse = GetDataPage(textResponse);
+            var dataResponseWomen = GetDataPage(textResponseWomen);
 
-            SaveNewInPageJson(dataResponse, NewInPageJsonPath);
+            SaveNewInPageJson(dataResponseWomen, NewInPageJsonPathWomen);
 
-            var categories = GetCategories(NewInPageJsonPath, CategoryPath);
-                var package = new ExcelPackage();
+            var categories = GetCategories(NewInPageJsonPathWomen, CategoryPath);
+            if (categories == null) return;
 
-            foreach (var category in categories.category.values)
-            {
-                if (category.description != $"{Filter}") continue;
+            var package = new ExcelPackage();
 
-                foreach (var child in category.children)
+               
+                
+
+            var productsCategories = categories.categoryList.categoryNameLists
+                .Where(c => c.description == $"{Filter}")
+                .SelectMany(c=>c.productsCategories, (_, category) => new 
                 {
-                    var namePage = child.description;
-                    var sheet = package.Workbook.Worksheets.Add($"{Filter} {namePage}");
-                    sheet.Cells[1, 1].Value = "Image";
-                    sheet.Cells[1, 2].Value = "Category";
-                    sheet.Cells[1, 3].Value = "Link";
-                    
+                    CategoryName = category.description,
+                    Product = category.products
+                });
 
-                    var positionRow = 2;
-                    var positionCol = 1;
+            foreach (var productsCategory in productsCategories)
+            {
+                var sheet = package.Workbook.Worksheets.Add($"{productsCategory.CategoryName}");
+                sheet.Cells[1, 1].Value = "Image";
+                sheet.Cells[1, 2].Value = "Product";
+                sheet.Cells[1, 3].Value = "Link";
 
-                    foreach (var productCategory in child.children)
+                for (int i = 0, row = 2; i < productsCategory.Product.Length; i++, row++)
+                {
+                    var response = GetFarfetchResponse(
+                        $"{RootPath}{PathWomen}?page=1&view=96&sort=3&category={productsCategory.Product[i].value}");
+                    response = GetDataPage(response);
+                    var productsInfo = GetProductInfo(response).items[0];
+                    var bytes = GetFarfetchImage(productsInfo.images.cutOut);
+                    if (bytes.Length != 0)
                     {
-                        sheet.Cells[positionRow, positionCol].Value = productCategory.description;
-                        positionRow++;
-                        foreach (var product in productCategory.children)
-                        {
-                            var response = GetFarfetchResponse(
-                                $"{RootPath}/kz/sets/new-in-this-week-eu-women.aspx?page=1&view=96&sort=3&category={product.value}");
-                            response = GetDataPage(response);
-                            var productsInfo = GetProductInfo(response);
-                            foreach (var productInfo in productsInfo.items)
-                            {
-                                var bytes = GetFarfetchImage(productInfo.images.cutOut);
-                                if (bytes.Length != 0)
-                                {
-                                    sheet.Row(positionRow).Height = 100;
-                                    sheet.Column(positionCol).Width = 20;
-                                    using (Stream str = new MemoryStream(bytes))
-                                    {
-
-                                        var excelImage = sheet.Drawings.AddPicture(positionRow.ToString(), str);
-                                        excelImage.From.Row = positionRow-1;
-                                        excelImage.From.Column = positionCol-1;
-                                        excelImage.SetSize(100,100);
-
-                                    }
-
-                                    positionCol++;
-                                    sheet.Cells[positionRow, positionCol].Value = productInfo.shortDescription;
-                                    positionCol++;
-                                    sheet.Cells[positionRow, positionCol].Value = $"{RootPath}{productInfo.url}";
-                                    positionRow++;
-                                    positionCol = 1;
-                                }
-                                
-                            }
-
-                            
-
-
-                        }
+                        sheet.Row(row).Height = 100;
+                        sheet.Column(1).Width = 20;
+                        using Stream str = new MemoryStream(bytes);
+                        var excelImage = sheet.Drawings.AddPicture(row.ToString(), str);
+                        excelImage.From.Row = row - 1;
+                        excelImage.From.Column = 0;
+                        excelImage.SetSize(100, 100);
                     }
-                    sheet.Cells[1, 2, sheet.Rows.EndRow, sheet.Columns.EndColumn].AutoFitColumns();
-                    sheet.Cells[1, 1, sheet.Rows.EndRow, sheet.Columns.EndColumn].Style.HorizontalAlignment =
-                        ExcelHorizontalAlignment.Center;
-                    sheet.Cells[1, 1, sheet.Rows.EndRow, sheet.Columns.EndColumn].Style.VerticalAlignment =
-                        ExcelVerticalAlignment.Center;
+
+                    sheet.Cells[row, 2].Value = productsInfo.shortDescription;
+                    sheet.Cells[row, 3].Value = $"{RootPath}{productsInfo.url}";
                 }
-
-
+                sheet.Cells[1, 2, sheet.Rows.EndRow, sheet.Columns.EndColumn].AutoFitColumns();
+                sheet.Cells[1, 1, sheet.Rows.EndRow, sheet.Columns.EndColumn].Style.HorizontalAlignment =
+                    ExcelHorizontalAlignment.Center;
+                sheet.Cells[1, 1, sheet.Rows.EndRow, sheet.Columns.EndColumn].Style.VerticalAlignment =
+                    ExcelVerticalAlignment.Center;
             }
-            
             GenerateProductReport(package);
+
+
+
+
+
+
+
+
+
+
+            //foreach (var category in categories.categoryList.categoryNameLists)
+            //{
+            //    if (category.description != $"{Filter}") continue;
+
+            //    foreach (var child in category.productsCategories)
+            //    {
+            //        var namePage = child.description;
+            //       var sheet = package.Workbook.Worksheets.Add($"{Filter} {namePage}");
+            //        sheet.Cells[1, 1].Value = "Image";
+            //        sheet.Cells[1, 2].Value = "Category";
+            //        sheet.Cells[1, 3].Value = "Link";
+
+
+            //        var positionRow = 2;
+            //        var positionCol = 1;
+
+            //        foreach (var productCategory in child.products)
+            //        {
+            //            sheet.Cells[positionRow, positionCol].Value = productCategory.description;
+            //            positionRow++;
+            //            foreach (var product in productCategory.children)
+            //            {
+            //                var response = GetFarfetchResponse(
+            //                    $"{RootPath}{PathWomen}?page=1&view=96&sort=3&category={product.value}");
+            //                response = GetDataPage(response);
+            //                var productsInfo = GetProductInfo(response);
+            //                foreach (var productInfo in productsInfo.items)
+            //                {
+            //                    var bytes = GetFarfetchImage(productInfo.images.cutOut);
+            //                    if (bytes.Length != 0)
+            //                    {
+            //                        sheet.Row(positionRow).Height = 100;
+            //                        sheet.Column(positionCol).Width = 20;
+            //                        using (Stream str = new MemoryStream(bytes))
+            //                        {
+
+            //                            var excelImage = sheet.Drawings.AddPicture(positionRow.ToString(), str);
+            //                            excelImage.From.Row = positionRow - 1;
+            //                            excelImage.From.Column = positionCol - 1;
+            //                            excelImage.SetSize(100, 100);
+
+            //                        }
+
+            //                        positionCol++;
+            //                        sheet.Cells[positionRow, positionCol].Value = productInfo.shortDescription;
+            //                        positionCol++;
+            //                        sheet.Cells[positionRow, positionCol].Value = $"{RootPath}{productInfo.url}";
+            //                        positionRow++;
+            //                        positionCol = 1;
+            //                    }
+
+            //                }
+
+
+
+
+            //            }
+            //        }
+
+            //        sheet.Cells[1, 2, sheet.Rows.EndRow, sheet.Columns.EndColumn].AutoFitColumns();
+            //        sheet.Cells[1, 1, sheet.Rows.EndRow, sheet.Columns.EndColumn].Style.HorizontalAlignment =
+            //            ExcelHorizontalAlignment.Center;
+            //        sheet.Cells[1, 1, sheet.Rows.EndRow, sheet.Columns.EndColumn].Style.VerticalAlignment =
+            //            ExcelVerticalAlignment.Center;
+            //    }
+
+
+            //}
+
+            //GenerateProductReport(package);
         }
 
 
